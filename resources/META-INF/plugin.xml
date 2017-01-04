@@ -1,0 +1,41 @@
+<idea-plugin version="2">
+  <id>com.github.nukc.plugin.apkmultichannel</id>
+  <name>ApkMultiChannel</name>
+  <version>1.0</version>
+  <vendor email="c@littlemusic.tv" url="https://github.com/nukc">Nukc</vendor>
+
+  <description><![CDATA[
+      Build apk for multiple channel.<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      <p>1.0</p>
+      <ul>
+        <li>Initial</li>
+      </ul>
+    ]]>
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="145.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products -->
+  <depends>com.intellij.modules.lang</depends>
+
+  <actions>
+    <!-- Add your actions here -->
+    <action id="ApkMultiChannel" class="com.github.nukc.plugin.SettingAction" text="Channel Setting"
+            description="ApkMultiChannel"
+            icon="/icons/plugin.png" >
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+    </action>
+    <action id="PopupMenuAction" class="com.github.nukc.plugin.MainAction" text="Build MultiChannel"
+            description="PopupMenuAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="FindUsages"/>
+    </action>
+  </actions>
+
+</idea-plugin>
