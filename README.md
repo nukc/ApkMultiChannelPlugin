@@ -8,8 +8,8 @@
 
 ## 安装
 
-- 打开 Android Studio: 打开 ```Setting/Preferences -> Plugins -> Browse repositories```
-然后搜索 ```ApkMultiChannel``` 安装重启
+- ~~打开 Android Studio: 打开 ```Setting/Preferences -> Plugins -> Browse repositories```
+然后搜索 ```ApkMultiChannel``` 安装重启~~
 
 或者
 
@@ -28,18 +28,19 @@
 <img src="https://raw.githubusercontent.com/nukc/ApkMultiChannelPlugin/master/art/setting.png">
 
 配置说明：
-Key Store Path: 签名文件的路径
-Key Store Password: 签名文件的密码
-Key Alias: 密钥别名
-Key Password: 密钥密码
 
-Zipalign Path: zipalign文件的路径（用于优化 apk；zipalign 可以确保所有未压缩的数据均是以相对于文件开始部分的特定字节对齐开始，这样可减少应用消耗的 RAM 量。）
-Signer Version: 选择签名版本：apksigner 和 jarsigner
-Build Type: 打包方式
+Key Store Path: 签名文件的路径 <br/>
+Key Store Password: 签名文件的密码 <br/>
+Key Alias: 密钥别名 <br/>
+Key Password: 密钥密码 <br/>
+
+Zipalign Path: zipalign文件的路径（用于优化 apk；zipalign 可以确保所有未压缩的数据均是以相对于文件开始部分的特定字节对齐开始，这样可减少应用消耗的 RAM 量。）<br/>
+Signer Version: 选择签名版本：apksigner 和 jarsigner <br/>
+Build Type: 打包方式 <br/>
 
 Channels: 渠道列表，每行一个，最前面可加 ```>``` 或不加（保存信息的时候，程序会自行加上）
 
-3. 配置完成之后按 OK 就会开始进行渠道打包，文件会输出在选中的apk的当前目录下的channels目录中
+3. 配置完成之后按 OK 就会开始进行渠道打包，文件会输出在选中的apk的当前目录下的channels目录中，看apk的名字可以区分渠道
 
 <img src="https://raw.githubusercontent.com/nukc/ApkMultiChannelPlugin/master/art/output.png">
 
@@ -57,7 +58,7 @@ Channels: 渠道列表，每行一个，最前面可加 ```>``` 或不加（保�
 - 如果 buildType 选择美团方案在 META-INF 目录写入空文件:
     - 自定义空文件名的前辍（目前是 ```c_```）
     - 在打包之前先判断选中的apk是否已经签名，如果没有则先签名
-  
+- 添加支持选择项目路径外的apk文件进行多渠道打包
 
 ## 参考致谢
 
