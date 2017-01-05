@@ -13,72 +13,6 @@ import java.util.zip.*;
  */
 public class ZipHelper {
 
-    private static void zip(String srcPath, File srcFile, ZipOutputStream zos) throws IOException {
-        if (srcFile.isFile()) {
-            int buffer = 2048;
-            byte[] data = new byte[buffer];
-
-            String subPath = srcFile.getAbsolutePath();
-            int index = subPath.indexOf(srcPath);
-            if (index != -1) {
-                subPath = subPath.substring(srcPath.length() + File.separator.length());
-            }
-            ZipEntry entry = new ZipEntry(subPath);
-            zos.putNextEntry(entry);
-            FileInputStream fis = new FileInputStream(srcFile);
-            BufferedInputStream bis = new BufferedInputStream(fis);
-
-            int currentByte;
-            while ((currentByte = bis.read(data, 0, buffer)) != -1) {
-                zos.write(data, 0, currentByte);
-            }
-            bis.close();
-            fis.close();
-            zos.closeEntry();
-        } else {
-            File[] childFiles = srcFile.listFiles();
-            if (childFiles != null) {
-                for (File file : childFiles) {
-                    zip(srcPath, file, zos);
-                }
-            }
-        }
-    }
-
-    public static void zip(String srcPath, String zipPath) {
-        File srcFile = new File(srcPath);
-        if (!srcFile.exists()) return;
-
-        File zipFile = new File(zipPath);
-        if (zipFile.exists() && zipFile.isFile()) {
-            zipFile.delete();
-        }
-
-        File zipParentFile = zipFile.getParentFile();
-        if (!zipParentFile.exists()) {
-            zipParentFile.mkdirs();
-        }
-
-        CheckedOutputStream cos = null;
-        ZipOutputStream zos = null;
-        try {
-            cos = new CheckedOutputStream(new FileOutputStream(zipFile), new CRC32());
-            zos = new ZipOutputStream(cos);
-
-            zip(srcPath, srcFile, zos);
-            zos.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (zos != null) zos.close();
-                if (cos != null) cos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public static void extractAndroidManifestXml(String zipPath, String outputDir) {
         File file = new File(zipPath);
         File tempFile = deleteTemp(outputDir);
@@ -119,7 +53,6 @@ public class ZipHelper {
                         bos.write(data, 0, currentByte);
                     }
                     bos.flush();
-
                 }
             }
         } catch (IOException e) {
@@ -223,9 +156,5 @@ public class ZipHelper {
             zos.close();
         }
     }
-
-
-
-
 
 }
