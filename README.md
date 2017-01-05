@@ -19,11 +19,15 @@
 
 ## 使用方式
 
-1. 选择一个 apk 然后右键，点击 Build MultiChannel
+#### 1. 选择 apk
+
+选择一个 apk 然后右键，点击 Build MultiChannel
 
 <img src="https://raw.githubusercontent.com/nukc/ApkMultiChannelPlugin/master/art/choose-apk.png">
 
-2. 配置签名信息，打包方式和渠道等
+#### 2. 配置
+
+配置签名信息，打包方式和渠道等
 
 <img src="https://raw.githubusercontent.com/nukc/ApkMultiChannelPlugin/master/art/setting.png">
 
@@ -40,9 +44,14 @@ Build Type: 打包方式 <br/>
 
 Channels: 渠道列表，每行一个，最前面可加 ```>``` 或不加（保存信息的时候，程序会自行加上）
 
-3. 配置完成之后按 OK 就会开始进行渠道打包，文件会输出在选中的apk的当前目录下的channels目录中，看apk的名字可以区分渠道
+#### 3. 开始打包
+
+配置完成之后按 OK 就会开始进行渠道打包，文件会输出在选中的apk的当前目录下的channels目录中，看apk的名字可以区分渠道
 
 <img src="https://raw.githubusercontent.com/nukc/ApkMultiChannelPlugin/master/art/output.png">
+
+
+## 说明
 
 在开始打包前，配置信息先会保存在项目根目录的 channels.properties：
 
