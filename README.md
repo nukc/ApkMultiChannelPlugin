@@ -8,8 +8,8 @@
 
 ## 安装
 
-- ~~打开 Android Studio: 打开 ```Setting/Preferences -> Plugins -> Browse repositories```
-然后搜索 ```ApkMultiChannel``` 安装重启~~
+- 打开 Android Studio: 打开 ```Setting/Preferences -> Plugins -> Browse repositories```
+然后搜索 ```ApkMultiChannel``` 安装重启
 
 或者
 
@@ -42,11 +42,11 @@
 **Signer Version:** 选择签名版本：apksigner 和 jarsigner <br/>
 **Build Type:** 打包方式 <br/>
 
-Channels: 渠道列表，每行一个，最前面可加 ```>``` 或不加（保存信息的时候，程序会自行加上）
+**Channels:** 渠道列表，每行一个，最前面可加 ```>``` 或不加（保存信息的时候，程序会自行加上）
 
 #### 3. 开始打包
 
-配置完成之后按 OK 就会开始进行渠道打包，文件会输出在选中的apk的当前目录下的channels目录中，看apk的名字可以区分渠道
+配置完成之后按 OK 就会开始进行渠道打包，文件会输出在选中的apk的当前目录下的channels目录中
 
 <img src="https://raw.githubusercontent.com/nukc/ApkMultiChannelPlugin/master/art/output.png">
 
@@ -77,6 +77,8 @@ Channels: 渠道列表，每行一个，最前面可加 ```>``` 或不加（保�
     - 自定义空文件名的前辍（目前是 ```c_```）
     - 在打包之前先判断选中的apk是否已经签名，如果没有则先签名
 - 添加支持选择项目路径外的apk文件进行多渠道打包
+
+有什么问题欢迎大家在 [Issues](https://github.com/nukc/ApkMultiChannelPlugin/issues) 中提问
 
 ## 参考致谢
 
