@@ -1,5 +1,6 @@
 package com.github.nukc.plugin.helper;
 
+import com.android.apksigner.core.zip.ZipFormatException;
 import com.github.nukc.plugin.axml.ChannelEditor;
 import com.github.nukc.plugin.axml.decode.AXMLDoc;
 import com.github.nukc.plugin.model.Options;
@@ -58,9 +59,11 @@ public class BuildHelper {
                 if (OptionsHelper.BUILD_TYPE_UPDATE.equals(options.buildType)) {
                     updateAndroidManifestXml(progressIndicator, virtualFile, tempPath, options,
                             apkNameWithoutExtension, outPath, apkFile);
-                } else {
+                } else if (OptionsHelper.BUILD_TYPE_ADD.equals(options.buildType)){
                     addChannelFileToMETAINF(progressIndicator, options, apkFile, outPath, tempPath,
                             apkNameWithoutExtension);
+                } else {
+                    writeApkComment(progressIndicator, options, apkFile, outPath, tempPath, apkNameWithoutExtension);
                 }
             }
         });
@@ -226,5 +229,62 @@ public class BuildHelper {
                 return FileVisitResult.CONTINUE;
             }
         }
+    }
+
+    private static void writeApkComment(ProgressIndicator progressIndicator, Options options,
+                                        File apkFile, String outPath, String tempPath,
+                                        String apkNameWithoutExtension) {
+        try {
+            if (ZipHelper.hasCommentSign(apkFile)) {
+                String comment = ZipHelper.readZipComment(apkFile);
+                NotificationHelper.error("the apk comment already exists, the comment is " + comment);
+                return;
+            }
+
+            if (ApkHelper.checkV2Signature(apkFile)) {
+                log.info("the apk is v2 signature");
+                String tempApkPath = tempPath + File.separator + apkNameWithoutExtension + "-unsigned.apk";
+                File tempApk = new File(tempApkPath);
+                FileUtil.createIfDoesntExist(tempApk);
+
+                //delete signature
+                boolean success = ZipHelper.update(new FileInputStream(apkFile), new FileOutputStream(tempApk),
+                        new HashMap<>(0));
+                if (!success) {
+                    NotificationHelper.error("create tempApk failed, please try again");
+                    return;
+                }
+
+                //apkSigner is not support write zip comment
+                options.signer = "jarsigner";
+                CommandHelper.execSigner(options, tempApkPath);
+                String zipalignApkPath = tempPath + File.separator + apkNameWithoutExtension + ".apk";
+                CommandHelper.execZipalign(options, tempApkPath, zipalignApkPath);
+
+                apkFile = new File(zipalignApkPath);
+            }
+
+            for (int i = 0, count = options.channels.size(); i < count; i++) {
+                String channel = options.channels.get(i);
+                progressIndicator.setText("Creating " + channel + " apk");
+                progressIndicator.setText2(i + 1 + "/" + count);
+
+                String newApkPath = outPath + File.separator + apkNameWithoutExtension + "-" + channel + ".apk";
+                File newApkFile = new File(newApkPath);
+                FileUtil.createIfDoesntExist(newApkFile);
+
+                FileUtil.copy(apkFile, newApkFile);
+                ZipHelper.writeComment(newApkFile, channel);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            progressIndicator.setText("Build failed");
+        } catch (ZipFormatException e) {
+            e.printStackTrace();
+        } finally {
+            ZipHelper.deleteTemp(tempPath);
+        }
+
+        progressIndicator.setFraction(1);
     }
 }

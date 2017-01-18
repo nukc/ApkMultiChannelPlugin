@@ -30,6 +30,7 @@ public class OptionsHelper {
 
     public static final String BUILD_TYPE_UPDATE = "update AndroidManifest.xml";
     public static final String BUILD_TYPE_ADD = "add channel file to META-INF";
+    public static final String BUILD_TYPE_ZIP_COMMENT = "write zip comment";
 
     private static String getPathName(Project project) {
         return project.getBasePath() + File.separator + CHANNELS_PROPERTIES;

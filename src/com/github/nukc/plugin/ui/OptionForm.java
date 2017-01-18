@@ -79,6 +79,7 @@ public class OptionForm extends JFrame {
 
         mCbBuildType.addItem(OptionsHelper.BUILD_TYPE_UPDATE);
         mCbBuildType.addItem(OptionsHelper.BUILD_TYPE_ADD);
+        mCbBuildType.addItem(OptionsHelper.BUILD_TYPE_ZIP_COMMENT);
 
         mBtnOk.addActionListener(new AbstractAction() {
             @Override
@@ -105,6 +106,23 @@ public class OptionForm extends JFrame {
                         mBtnSignerBrowse.setEnabled(true);
                     } else {
                         mBtnSignerBrowse.setEnabled(false);
+                    }
+                }
+            }
+        });
+
+        mCbBuildType.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    String buildType = mCbBuildType.getSelectedItem().toString();
+                    // v2 signature not support write zip comment
+                    if (OptionsHelper.BUILD_TYPE_ZIP_COMMENT.equals(buildType)) {
+                        mCbSigner.setEnabled(false);
+                        mBtnSignerBrowse.setEnabled(false);
+                    } else {
+                        mCbSigner.setEnabled(true);
+                        mBtnSignerBrowse.setEnabled(true);
                     }
                 }
             }

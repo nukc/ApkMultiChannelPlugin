@@ -4,9 +4,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Map;
-import java.util.zip.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Created by Nukc.
@@ -157,4 +163,114 @@ public class ZipHelper {
         }
     }
 
+    public static boolean isZipContainsSignature(File zip) throws IOException {
+        ZipFile zipFile = new ZipFile(zip);
+        try {
+            Enumeration en = zipFile.entries();
+
+            while (en.hasMoreElements()) {
+                ZipEntry zipEntry = (ZipEntry)en.nextElement();
+                String name = zipEntry.getName();
+                if (name.contains("META-INF")  &&
+                        (name.endsWith("RSA") || name.contains("SF") || name.contains("MANIFEST.MF"))) {
+                    return true;
+                }
+            }
+            zipFile.close();
+            return false;
+        }
+        finally {
+            zipFile.close();
+        }
+    }
+
+    private static final byte[] COMMENT_SIGN = new byte[]{99, 104, 97, 110, 110, 101, 108}; //channel
+
+    public static void writeComment(File zipFile, String comment) throws IOException {
+        // {@see java.util.zip.ZipOutputStream.writeEND}
+        byte[] data = comment.getBytes("utf-8");
+        final RandomAccessFile raf = new RandomAccessFile(zipFile, "rw");
+        raf.seek(zipFile.length() - 2);
+        // write zip comment length
+        // (content field length + length field length + sign field length)
+        writeShort(data.length + 2 + COMMENT_SIGN.length, raf);
+        // write content
+        writeBytes(data, raf);
+        // write content length
+        writeShort(data.length, raf);
+        // write sign bytes
+        writeBytes(COMMENT_SIGN, raf);
+        raf.close();
+    }
+
+    private static void writeBytes(byte[] data, DataOutput out) throws IOException {
+        out.write(data);
+    }
+
+    private static void writeShort(int i, DataOutput out) throws IOException {
+        ByteBuffer bb = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN);
+        bb.putShort((short) i);
+        out.write(bb.array());
+    }
+
+    public static boolean hasCommentSign(File file) throws IOException {
+        RandomAccessFile raf = null;
+        try {
+            raf = new RandomAccessFile(file, "r");
+            long index = raf.length();
+            byte[] buffer = new byte[COMMENT_SIGN.length];
+            index -= COMMENT_SIGN.length;
+            // read comment sign bytes
+            raf.seek(index);
+            raf.readFully(buffer);
+            return Arrays.equals(COMMENT_SIGN, buffer);
+        } finally {
+            if (raf != null) {
+                raf.close();
+            }
+        }
+    }
+
+    public static String readZipComment(File file) throws IOException {
+        RandomAccessFile raf = null;
+        try {
+            raf = new RandomAccessFile(file, "r");
+            long index = raf.length();
+            byte[] buffer = new byte[COMMENT_SIGN.length];
+            index -= COMMENT_SIGN.length;
+            // read sign bytes
+            raf.seek(index);
+            raf.readFully(buffer);
+            // if sign bytes matched
+            if (Arrays.equals(buffer, COMMENT_SIGN)) {
+                index -= 2;
+                raf.seek(index);
+                // read content length field
+                int length = readShort(raf);
+                if (length > 0) {
+                    index -= length;
+                    raf.seek(index);
+                    // read content bytes
+                    byte[] bytesComment = new byte[length];
+                    raf.readFully(bytesComment);
+                    return new String(bytesComment, "utf-8");
+                } else {
+                    throw new IOException("Zip comment content not found");
+                }
+            } else {
+                throw new IOException("Zip comment sign bytes not found");
+            }
+        } finally {
+            if (raf != null) {
+                raf.close();
+            }
+        }
+    }
+
+    private static short readShort(DataInput input) throws IOException {
+        byte[] buf = new byte[2];
+        input.readFully(buf);
+        ByteBuffer bb = ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN);
+        return bb.getShort(0);
+    }
 }

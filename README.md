@@ -5,6 +5,7 @@
 - 支持2种渠道打包方式：
     - 修改 AndroidManifest.xml 的 meta-data (name 为 UMENG_CHANNEL) 的 value 值，没有则插入，然后重新打包签名
     - 美团的方式，直接往 apk 的 META-INF 目录里添加空文件（文件名为：c_渠道）
+    - packer-ng-plugin的方式，往 apk 注释字段保存渠道号和验证标记字节
 
 ## 安装
 
@@ -69,7 +70,12 @@
 同时替换 AndroidManifest.xml，最后重新签名。
 
 #### add channel file to META-INF
-复制1个apk，然后直接添加空文件到其 META-INF 目录（不重新签名）。读取渠道：[ChannelHelper](https://gist.github.com/nukc/f777b54232be56f04171bcef56a627e1)
+复制1个 apk，然后直接添加空文件到其 META-INF 目录（不重新签名）。读取渠道：[ChannelHelper](https://gist.github.com/nukc/f777b54232be56f04171bcef56a627e1)
+
+#### write zip comment
+先判断选中的 apk 中 comment 是否含有 SIGN 字节，如果有则不进行渠道打包并提示；之后检查是否是 v2 签名，如果是 v2，则复制1个不带签名文件的 apk 到 temp 文件夹并重新签名为 v1，
+最后开始渠道打包。（ v2 签名之后不能修改 ```ZIP End of Central Directory``` 区块，而且如果先修改 ```ZIP End of Central Directory``` 区块再 v2 签名，comment 会被抹掉。）
+读取渠道：[ZipCommentHelper](https://gist.github.com/nukc/f762f73276c4ad02618147acd6978d16)
 
 ## 以后要加的功能
 
@@ -86,6 +92,7 @@
 - [Bilibili/apk-channelization](https://github.com/Bilibili/apk-channelization)
 - [美团Android自动化之旅—生成渠道包](http://tech.meituan.com/mt-apk-packaging.html)
 - [apksigner](https://developer.android.com/studio/command-line/apksigner.html)
+- [packer-ng-plugin](https://github.com/mcxiaoke/packer-ng-plugin)
 
 同时感谢 [dim](https://github.com/zzz40500) 和 [区长](https://github.com/lizhangqu) 的指点迷津。
 

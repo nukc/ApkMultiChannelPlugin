@@ -4,7 +4,6 @@ import com.github.nukc.plugin.model.Options;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
