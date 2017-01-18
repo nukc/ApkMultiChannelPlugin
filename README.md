@@ -83,6 +83,7 @@
     - 自定义空文件名的前辍（目前是 ```c_```）
     - 在打包之前先判断选中的apk是否已经签名，如果没有则先签名
 - 添加支持选择项目路径外的apk文件进行多渠道打包
+- buildType 添加支持美团新一代渠道包生成方式 Walle
 
 有什么问题欢迎大家在 [Issues](https://github.com/nukc/ApkMultiChannelPlugin/issues) 中提问
 
@@ -93,6 +94,7 @@
 - [美团Android自动化之旅—生成渠道包](http://tech.meituan.com/mt-apk-packaging.html)
 - [apksigner](https://developer.android.com/studio/command-line/apksigner.html)
 - [packer-ng-plugin](https://github.com/mcxiaoke/packer-ng-plugin)
+- [新一代开源Android渠道包生成工具Walle](http://tech.meituan.com/android-apk-v2-signature-scheme.html)
 
 同时感谢 [dim](https://github.com/zzz40500) 和 [区长](https://github.com/lizhangqu) 的指点迷津。
 
