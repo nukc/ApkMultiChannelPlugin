@@ -54,7 +54,7 @@ public class OptionsHelper {
             while ((line = br.readLine()) != null) {
                 if (line.length() != 0 && line.indexOf("#") != 0) {
                     if (line.indexOf(">") == 0) {
-                        String channel = line.substring(1);
+                        String channel = line.substring(1).trim();
                         if (channel.length() > 0) {
                             log.info("channel = " + channel);
                             options.channels.add(channel);
