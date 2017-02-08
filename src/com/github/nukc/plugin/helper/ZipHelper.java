@@ -163,27 +163,6 @@ public class ZipHelper {
         }
     }
 
-    public static boolean isZipContainsSignature(File zip) throws IOException {
-        ZipFile zipFile = new ZipFile(zip);
-        try {
-            Enumeration en = zipFile.entries();
-
-            while (en.hasMoreElements()) {
-                ZipEntry zipEntry = (ZipEntry)en.nextElement();
-                String name = zipEntry.getName();
-                if (name.contains("META-INF")  &&
-                        (name.endsWith("RSA") || name.contains("SF") || name.contains("MANIFEST.MF"))) {
-                    return true;
-                }
-            }
-            zipFile.close();
-            return false;
-        }
-        finally {
-            zipFile.close();
-        }
-    }
-
     private static final byte[] COMMENT_SIGN = new byte[]{99, 104, 97, 110, 110, 101, 108}; //channel
 
     public static void writeComment(File zipFile, String comment) throws IOException {

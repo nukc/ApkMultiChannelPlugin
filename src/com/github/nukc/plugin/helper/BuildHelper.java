@@ -1,6 +1,6 @@
 package com.github.nukc.plugin.helper;
 
-import com.android.apksigner.core.zip.ZipFormatException;
+import com.android.apksig.apk.ApkFormatException;
 import com.github.nukc.plugin.axml.ChannelEditor;
 import com.github.nukc.plugin.axml.decode.AXMLDoc;
 import com.github.nukc.plugin.model.Options;
@@ -14,13 +14,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +58,7 @@ public class BuildHelper {
                 if (OptionsHelper.BUILD_TYPE_UPDATE.equals(options.buildType)) {
                     updateAndroidManifestXml(progressIndicator, virtualFile, tempPath, options,
                             apkNameWithoutExtension, outPath, apkFile);
-                } else if (OptionsHelper.BUILD_TYPE_ADD.equals(options.buildType)){
+                } else if (OptionsHelper.BUILD_TYPE_ADD.equals(options.buildType)) {
                     addChannelFileToMETAINF(progressIndicator, options, apkFile, outPath, tempPath,
                             apkNameWithoutExtension);
                 } else {
@@ -139,13 +138,33 @@ public class BuildHelper {
     private static void addChannelFileToMETAINF(ProgressIndicator progressIndicator, Options options,
                                                 File apkFile, String outPath, String tempPath,
                                                 String apkNameWithoutExtension) {
-        for (int i = 0, count = options.channels.size(); i < count; i++) {
-            String channel = options.channels.get(i);
-            progressIndicator.setText("Creating " + channel + " apk");
-            progressIndicator.setText2(i + 1 + "/" + count);
+        try {
+            final int signVersion = ApkHelper.checkSignatureVersion(apkFile);
+            // 使用 jarsigner 可以先签名后添加渠道空文件
+            if (signVersion == 0 && options.signer.equals("jarsigner")) {
+                log.warn("the apk is no signature ~");
+                String tempApkPath = createNotSignApk(apkFile, tempPath, apkNameWithoutExtension);
 
-            try {
-                String newApkPath = outPath + File.separator + apkNameWithoutExtension + "-" + channel + ".apk";
+                CommandHelper.execSigner(options, tempApkPath);
+                String zipalignApkPath = tempPath + File.separator + apkNameWithoutExtension + ".apk";
+                CommandHelper.execZipalign(options, tempApkPath, zipalignApkPath);
+
+                apkFile = new File(zipalignApkPath);
+            }
+
+            boolean shouldV2Sign = signVersion != 1 && !options.signer.equals("jarsigner");
+
+            for (int i = 0, count = options.channels.size(); i < count; i++) {
+                String channel = options.channels.get(i);
+                progressIndicator.setText("Creating " + channel + " apk");
+                progressIndicator.setText2(i + 1 + "/" + count);
+
+                String newApkPath;
+                if (shouldV2Sign) {
+                    newApkPath = outPath + File.separator + apkNameWithoutExtension + "-" + channel + "-unsigned.apk";
+                } else {
+                    newApkPath = outPath + File.separator + apkNameWithoutExtension + "-" + channel + ".apk";
+                }
                 File newApkFile = new File(newApkPath);
                 FileUtil.createIfDoesntExist(newApkFile);
 
@@ -155,12 +174,20 @@ public class BuildHelper {
                     FileUtil.delete(newApkFile);
                 }
 
-                ZipHelper.deleteTemp(tempPath);
-            } catch (IOException e) {
-                e.printStackTrace();
-                progressIndicator.setText("Build failed");
+                // 使用 apksigner 需要最后重新签名
+                if (shouldV2Sign) {
+                    String zipalignApkPath = outPath + File.separator + apkNameWithoutExtension+ "-" + channel + ".apk";
+                    CommandHelper.execZipalign(options, newApkPath, zipalignApkPath);
+                    CommandHelper.execSigner(options, zipalignApkPath);
+
+                    FileUtil.delete(newApkFile);
+                }
             }
 
+            ZipHelper.deleteTemp(tempPath);
+        } catch (IOException | NoSuchAlgorithmException |ApkFormatException e) {
+            e.printStackTrace();
+            progressIndicator.setText("Build failed");
         }
 
         progressIndicator.setFraction(1);
@@ -168,6 +195,7 @@ public class BuildHelper {
 
 
     private static final String CHANNEL_FILE_PREFIX = "c_";
+
     /**
      * add channel file to META-INF
      */
@@ -176,7 +204,7 @@ public class BuildHelper {
         URI uri = URI.create("jar:file:" + path.toUri().getPath());
         Map<String, String> env = new HashMap<>();
 
-        try (FileSystem fileSystem =  FileSystems.newFileSystem(uri, env)){
+        try (FileSystem fileSystem = FileSystems.newFileSystem(uri, env)) {
             String relPath = "META-INF" + File.separator;
             final Path root = fileSystem.getPath(relPath);
             ChannelFileVisitor visitor = new ChannelFileVisitor();
@@ -241,19 +269,9 @@ public class BuildHelper {
                 return;
             }
 
-            if (ApkHelper.checkV2Signature(apkFile)) {
+            if (ApkHelper.isV2Signature(apkFile)) {
                 log.info("the apk is v2 signature");
-                String tempApkPath = tempPath + File.separator + apkNameWithoutExtension + "-unsigned.apk";
-                File tempApk = new File(tempApkPath);
-                FileUtil.createIfDoesntExist(tempApk);
-
-                //delete signature
-                boolean success = ZipHelper.update(new FileInputStream(apkFile), new FileOutputStream(tempApk),
-                        new HashMap<>(0));
-                if (!success) {
-                    NotificationHelper.error("create tempApk failed, please try again");
-                    return;
-                }
+                String tempApkPath = createNotSignApk(apkFile, tempPath, apkNameWithoutExtension);
 
                 //apkSigner is not support write zip comment
                 options.signer = "jarsigner";
@@ -276,15 +294,30 @@ public class BuildHelper {
                 FileUtil.copy(apkFile, newApkFile);
                 ZipHelper.writeComment(newApkFile, channel);
             }
-        } catch (IOException e) {
+        } catch (IOException | ApkFormatException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             progressIndicator.setText("Build failed");
-        } catch (ZipFormatException e) {
-            e.printStackTrace();
         } finally {
             ZipHelper.deleteTemp(tempPath);
         }
 
         progressIndicator.setFraction(1);
+    }
+
+    private static String createNotSignApk(File apkFile, String tempPath, String apkNameWithoutExtension)
+            throws FileNotFoundException {
+        String tempApkPath = tempPath + File.separator + apkNameWithoutExtension + "-unsigned.apk";
+        File tempApk = new File(tempApkPath);
+        FileUtil.createIfDoesntExist(tempApk);
+
+        //delete signature
+        boolean success = ZipHelper.update(new FileInputStream(apkFile), new FileOutputStream(tempApk),
+                new HashMap<>(0));
+        if (!success) {
+            String message = "create tempApk failed, please try again";
+            NotificationHelper.error(message);
+            throw new RuntimeException(message);
+        }
+        return tempApkPath;
     }
 }

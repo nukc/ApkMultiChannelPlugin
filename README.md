@@ -39,7 +39,7 @@
 **Key Alias:** 密钥别名 <br/>
 **Key Password:** 密钥密码 <br/>
 
-**Zipalign Path:** zipalign文件的路径（用于优化 apk；zipalign 可以确保所有未压缩的数据均是以相对于文件开始部分的特定字节对齐开始，这样可减少应用消耗的 RAM 量。）<br/>
+**Zipalign Path:** zipalign 文件的路径（用于优化 apk；zipalign 可以确保所有未压缩的数据均是以相对于文件开始部分的特定字节对齐开始，这样可减少应用消耗的 RAM 量。）<br/>
 **Signer Version:** 选择签名版本：apksigner 和 jarsigner <br/>
 **Build Type:** 打包方式 <br/>
 
@@ -70,7 +70,8 @@
 同时替换 AndroidManifest.xml，最后重新签名。
 
 #### add channel file to META-INF
-复制1个 apk，然后直接添加空文件到其 META-INF 目录（不重新签名）。读取渠道：[ChannelHelper](https://gist.github.com/nukc/f777b54232be56f04171bcef56a627e1)
+复制1个 apk，先检查签名版本，如果未签名则进行签名（配置选择 jarsigner 则在渠道打包前签名，apksigner 则是添加空文件到其 META-INF 目录后再签名）。
+读取渠道：[ChannelHelper](https://gist.github.com/nukc/f777b54232be56f04171bcef56a627e1)
 
 #### write zip comment
 先判断选中的 apk 中 comment 是否含有 SIGN 字节，如果有则不进行渠道打包并提示；之后检查是否是 v2 签名，如果是 v2，则复制1个不带签名文件的 apk 到 temp 文件夹并重新签名为 v1，
@@ -79,10 +80,7 @@
 
 ## 以后要加的功能
 
-- 如果 buildType 选择美团方案在 META-INF 目录写入空文件:
-    - 自定义空文件名的前辍（目前是 ```c_```）
-    - 在打包之前先判断选中的apk是否已经签名，如果没有则先签名
-- 添加支持选择项目路径外的apk文件进行多渠道打包
+- 添加支持选择项目路径外的 apk 文件进行多渠道打包
 - buildType 添加支持美团新一代渠道包生成方式 Walle
 
 有什么问题欢迎大家在 [Issues](https://github.com/nukc/ApkMultiChannelPlugin/issues) 中提问
@@ -95,6 +93,7 @@
 - [apksigner](https://developer.android.com/studio/command-line/apksigner.html)
 - [packer-ng-plugin](https://github.com/mcxiaoke/packer-ng-plugin)
 - [新一代开源Android渠道包生成工具Walle](http://tech.meituan.com/android-apk-v2-signature-scheme.html)
+- [apksig](https://android.googlesource.com/platform/tools/apksig/)
 
 同时感谢 [dim](https://github.com/zzz40500) 和 [区长](https://github.com/lizhangqu) 的指点迷津。
 
